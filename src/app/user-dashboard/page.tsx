@@ -14,8 +14,26 @@ export default function Dashboard() {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [newPrice, setNewPrice] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarClose, setSidebarClose] = useState(true);
+  const [user, setUser] = useState<any>(null);
 
-  // Fetch all products (sold + unsold for dashboard)
+  // ✅ Protect dashboard (redirect if not logged in)
+  useEffect(() => {
+    const checkUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        window.location.href = "/login";
+      } else {
+        setUser(user);
+      }
+    };
+    checkUser();
+  }, [supabase]);
+
+  // ✅ Fetch all products
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
@@ -33,9 +51,9 @@ export default function Dashboard() {
       setLoading(false);
     };
     fetchProducts();
-  }, []);
+  }, [supabase]);
 
-  // Update price
+  // ✅ Update price
   const updatePrice = async (id: string) => {
     if (!newPrice) return toast.warning("Enter a new price");
 
@@ -58,7 +76,7 @@ export default function Dashboard() {
     }
   };
 
-  // Mark as sold
+  // ✅ Mark as sold
   const markAsSold = async (id: string) => {
     const { error } = await supabase
       .from("products")
@@ -78,44 +96,101 @@ export default function Dashboard() {
     }
   };
 
+  // ✅ Logout
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error("Failed to logout");
+    } else {
+      toast.success("Logged out");
+      window.location.href = "/login";
+    }
+  };
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-      <div
-        className={`fixed z-40 inset-y-0 left-0 transform ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } w-64 bg-white shadow-lg transition-transform duration-200 ease-in-out md:translate-x-0`}
-      >
-        <div className="p-6 flex flex-col h-full">
-          <h2 className="text-2xl font-bold text-pink-600 mb-6">CampusMart</h2>
-          <nav className="flex-1 space-y-4">
-            <Link
-              href="/dashboard"
-              className="block text-gray-800 hover:text-pink-600"
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/add-product"
-              className="block text-gray-800 hover:text-pink-600"
-            >
-              Add Product
-            </Link>
-            <Link
-              href="/profile"
-              className="block text-gray-800 hover:text-pink-600"
-            >
-              Profile
-            </Link>
-          </nav>
-          <button className="flex items-center gap-2 text-red-600 hover:text-red-800">
-            <LogOut size={18} /> Logout
+    <div
+      className={`fixed z-40 inset-y-0 left-0 transform ${
+        sidebarOpen ? "translate-x-0" : "-translate-x-full"
+      } w-64 bg-white shadow-lg transition-transform duration-200 ease-in-out md:translate-x-0`}
+    >
+      <div className="p-6 flex flex-col h-full">
+        {/* Header with title + close button */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-pink-600">CampusMart</h2>
+          <button
+            className="md:hidden text-gray-600 hover:text-pink-600"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <X className="w-6 h-6" />
           </button>
         </div>
+
+        <nav className="flex-1 space-y-4">
+          <Link
+            href="/dashboard"
+            className="block text-gray-800 hover:text-pink-600"
+          >
+            Dashboard
+          </Link>
+          <Link
+            href="/add-product"
+            className="block text-gray-800 hover:text-pink-600"
+          >
+            Add Product
+          </Link>
+          <Link
+            href="/profile"
+            className="block text-gray-800 hover:text-pink-600"
+          >
+            Profile
+          </Link>
+        </nav>
+
+        {/* ✅ User info at bottom */}
+        {user && (
+          <div className="mt-auto border-t pt-4">
+            <div className="flex items-center gap-3 mb-3">
+              <img
+                src={
+                  user.user_metadata?.avatar_url ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                    user.user_metadata?.full_name || user.email
+                  )}`
+                }
+                alt="avatar"
+                className="w-10 h-10 rounded-full border"
+              />
+              <div>
+                <p className="text-sm font-medium text-gray-800">
+                  {user.user_metadata?.full_name || "User"}
+                </p>
+                <p className="text-xs text-gray-500 truncate">{user.email}</p>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 text-red-600 hover:text-red-800"
+            >
+              <LogOut size={18} /> Logout
+            </button>
+          </div>
+        )}
       </div>
+    </div>
+
+    {/* ✅ Overlay for mobile (click to close) */}
+    {sidebarOpen && (
+      <div
+        className="fixed inset-0 bg-black/40 md:hidden"
+        onClick={() => setSidebarOpen(false)}
+      />
+    )}
+
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 lg:ml-64 flex flex-col">
         {/* Navbar */}
         <header className="flex items-center justify-between bg-white shadow px-4 py-3">
           <div className="flex items-center gap-3">
@@ -137,7 +212,12 @@ export default function Dashboard() {
               <Search className="w-4 h-4 absolute left-2 top-2 text-gray-400" />
             </div>
             <img
-              src="https://ui-avatars.com/api/?name=User"
+              src={
+                user?.user_metadata?.avatar_url ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                  user?.user_metadata?.full_name || user?.email || "User"
+                )}`
+              }
               alt="user avatar"
               className="w-8 h-8 rounded-full border"
             />
@@ -160,7 +240,6 @@ export default function Dashboard() {
                     product.is_sold ? "opacity-50 grayscale" : ""
                   }`}
                 >
-                  {/* Card */}
                   <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition">
                     <div className="aspect-square overflow-hidden">
                       <img
@@ -235,7 +314,6 @@ export default function Dashboard() {
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
-                {/* Header */}
                 <div className="flex justify-between items-center border-b pb-2 mb-4">
                   <Dialog.Title className="text-lg font-bold">
                     {selectedProduct?.name}
@@ -245,7 +323,6 @@ export default function Dashboard() {
                   </button>
                 </div>
 
-                {/* Image Gallery */}
                 {selectedProduct?.images?.length > 0 && (
                   <div className="flex gap-2 overflow-x-auto mb-4">
                     {selectedProduct.images.map((img: string, idx: number) => (
@@ -259,7 +336,6 @@ export default function Dashboard() {
                   </div>
                 )}
 
-                {/* Details */}
                 <p>
                   <strong>Price:</strong> ₦{selectedProduct?.price}
                 </p>
@@ -273,7 +349,6 @@ export default function Dashboard() {
                   <strong>Description:</strong> {selectedProduct?.description}
                 </p>
 
-                {/* Actions */}
                 <div className="flex flex-col sm:flex-row gap-3">
                   <input
                     type="number"

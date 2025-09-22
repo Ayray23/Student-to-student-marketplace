@@ -37,11 +37,16 @@ export default function Dashboard() {
 
   const supabase = createClient();
 
+  
   // ✅ Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
-      const { data, error } = await supabase.from("products").select("*");
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("is_sold", false); // 🔥 Only fetch unsold products
+
       if (error) {
         console.error(error);
         setError("Failed to load products.");
@@ -52,6 +57,7 @@ export default function Dashboard() {
     };
     fetchProducts();
   }, []);
+
 
   // ✅ Add/remove favorites
   const toggleFavorite = (id) => {
@@ -79,8 +85,9 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Featured products
-  const featured = products.slice(0, 6);
+  
+  // ✅ Featured products (only unsold)
+  const featured = products.filter((p) => p.is_sold === false).slice(0, 6);
   const slides = featured.length;
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides);
