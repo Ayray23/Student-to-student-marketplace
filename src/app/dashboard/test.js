@@ -1300,3 +1300,54 @@
 // };
 
 // export default AddProduct;
+
+
+
+
+
+const nigerianStates = [
+    "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno",
+    "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "FCT", "Gombe",
+    "Imo", "Jigawa", "Kaduna", "Kano", "Katsina", "Kebbi", "Kogi", "Kwara",
+    "Lagos", "Nasarawa", "Niger", "Ogun", "Ondo", "Osun", "Oyo", "Plateau",
+    "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara"
+  ];
+
+  const stateCities = { "Lagos": ["Ikeja", "Victoria Island", "Lekki", "Surulere", "Yaba", "Ikorodu", "Alimosho", "Agege", "Mushin", "Oshodi"],
+   "Abuja": ["Central Area", "Garki", "Wuse", "Maitama", "Asokoro", "Gwarinpa", "Kubwa", "Nyanya", "Karu", "Lugbe"],
+    "Kano": ["Kano Municipal", "Fagge", "Dala", "Gwale", "Tarauni", "Nassarawa", "Ungogo", "Kumbotso"],
+     "Rivers": ["Port Harcourt", "Obio-Akpor", "Okrika", "Ogu–Bolo", "Eleme", "Tai", "Gokana", "Khana"], 
+     "Oyo": ["Ibadan North", "Ibadan South-West", "Ibadan North-East", "Ibadan North-West", "Ibadan South-East", "Egbeda", "Akinyele", "Lagelu"],
+      "Kaduna": ["Kaduna North", "Kaduna South", "Chikun", "Igabi", "Ikara", "Jaba", "Jema'a", "Kachia"],
+       "Katsina": ["Katsina", "Daura", "Funtua", "Malumfashi", "Bakori", "Batagarawa", "Baure", "Bindawa"],
+        "Ogun": ["Abeokuta North", "Abeokuta South", "Ado-Odo/Ota", "Ewekoro", "Ifo", "Ijebu East", "Ijebu North", "Ijebu Ode"],
+         "Anambra": ["Awka North", "Awka South", "Anambra East", "Anambra West", "Anaocha", "Ayamelum", "Dunukofia", "Ekwusigo"],
+          "Imo": ["Owerri Municipal", "Owerri North", "Owerri West", "Aboh Mbaise", "Ahiazu Mbaise", "Ehime Mbano", "Ezinihitte", "Ideato North"],
+           "Enugu": ["Enugu East", "Enugu North", "Enugu South", "Aninri", "Awgu", "Ezeagu", "Igbo Etiti", "Igbo Eze North"],
+            "Akwa Ibom": ["Uyo", "Ikot Ekpene", "Eket", "Oron", "Abak", "Eastern Obolo", "Essien Udim", "Etim Ekpo"],
+             "Abia": ["Aba North", "Aba South", "Arochukwu", "Bende", "Ikwuano", "Isiala Ngwa North", "Isiala Ngwa South", "Isuikwuato"],
+              "Bayelsa": ["Yenagoa", "Kolokuma/Opokuma", "Sagbama", "Brass", "Ekeremor", "Nembe", "Ogbia", "Southern Ijaw"],
+               "Cross River": ["Calabar Municipal", "Calabar South", "Akamkpa", "Akpabuyo", "Bakassi", "Bekwarra", "Biase", "Boki"],
+                "Delta": ["Warri North", "Warri South", "Warri South West", "Aniocha North", "Aniocha South", "Bomadi", "Burutu", "Ethiope East"],
+                 "Edo": ["Benin City", "Egor", "Ikpoba Okha", "Oredo", "Akoko-Edo", "Esan Central", "Esan North-East", "Esan South-East"], 
+                 "Ekiti": ["Ado Ekiti", "Efon", "Ekiti East", "Ekiti South-West", "Ekiti West", "Emure", "Gbonyin", "Ido Osi"],
+                  "Gombe": ["Gombe", "Akko", "Balanga", "Billiri", "Dukku", "Funakaye", "Kaltungo", "Kwami"],
+                   "Jigawa": ["Dutse", "Buji", "Garki", "Gumel", "Guri", "Gwaram", "Gwiwa", "Hadejia"],
+                    "Kebbi": ["Birnin Kebbi", "Aleiro", "Arewa Dandi", "Argungu", "Augie", "Bagudo", "Bunza", "Dandi"],
+                    "Kogi": ["Lokoja", "Ajaokuta", "Ankpa", "Bassa", "Dekina", "Ibaji", "Idah", "Igalamela Odolu"],
+                    "Kwara": ["Ilorin East", "Ilorin South", "Ilorin West", "Asa", "Baruten", "Edu", "Ekiti", "Ifelodun"],
+                    "Nasarawa": ["Lafia", "Akwanga", "Awe", "Doma", "Karu", "Keana", "Keffi", "Kokona"],
+                    "Niger": ["Minna", "Agaie", "Agwara", "Bida", "Borgu", "Bosso", "Chanchaga", "Edati"], 
+                    "Ondo": ["Akure North", "Akure South", "Akoko North-East", "Akoko North-West", "Akoko South-West", "Akoko South-East", "Ese Odo", "Idanre"],
+                      "Osun": ["Osogbo", "Aiyedaade", "Aiyedire", "Atakumosa East", "Atakumosa West", "Boluwaduro", "Boripe","Ede North"], 
+                        "Plateau": ["Jos North", "Jos South", "Jos East", "Barkin Ladi", "Bassa", "Bokkos", "Kanam", "Kanke"],
+                          "Sokoto": ["Sokoto North", "Sokoto South", "Binji", "Bodinga", "Dange Shuni", "Gada", "Goronyo", "Gudu"],
+                            "Taraba": ["Jalingo", "Ardo Kola", "Bali", "Donga", "Gashaka", "Gassol", "Ibi", "Karim Lamido"],
+                              "Yobe": ["Damaturu", "Fika", "Fune", "Geidam", "Gujba", "Gulani", "Gulani", "Jakusko", "Karasuwa"],
+                                "Zamfara": ["Gusau", "Anka", "Bakura", "Birnin Magaji/Kiyaw", "Bukkuyum", "Bungudu", "Gummi", "Kaura Namoda"],
+                                "Benue": ["Makurdi", "Ado", "Agatu", "Apa", "Buruku", "Gboko", "Guma", "Gwer East"],
+                                  "Borno": ["Maiduguri", "Jere", "Konduga", "Mafa", "Magumeri", "Marte", "Mobbar", "Monguno"], 
+                                    "Ebonyi": ["Abakaliki", "Afikpo North", "Afikpo South", "Ebonyi", "Ezza North", "Ezza South", "Ikwo", "Ishielu"],
+                                      "Adamawa": ["Yola North", "Yola South", "Fufure", "Ganye", "Gayuk", "Gombi", "Grie", "Hong"], 
+                                          "Bauchi": ["Bauchi", "Alkaleri", "Bogoro", "Damban", "Darazo", "Dass", "Gamawa", "Ganjuwa"]
+   };
