@@ -14,10 +14,10 @@ export default function Dashboard() {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [newPrice, setNewPrice] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarClose, setSidebarClose] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [sellerProfile, setSellerProfile] = useState<any>(null);
 
-  // ✅ Protect dashboard (redirect if not logged in)
+  // ✅ Protect dashboard (redirect if not logged in) + fetch profile
   useEffect(() => {
     const checkUser = async () => {
       const {
@@ -27,7 +27,18 @@ export default function Dashboard() {
       if (!user) {
         window.location.href = "/login";
       } else {
-        setUser(user);
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", user.id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching profile:", error.message);
+          setUser(user);
+        } else {
+          setUser({ ...user, profile });
+        }
       }
     };
     checkUser();
@@ -52,6 +63,29 @@ export default function Dashboard() {
     };
     fetchProducts();
   }, [supabase]);
+
+  // ✅ Fetch seller profile when modal opens
+  useEffect(() => {
+    const fetchSellerProfile = async () => {
+      if (selectedProduct?.user_id) {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", selectedProduct.user_id)
+          .single();
+
+        if (!error) {
+          setSellerProfile(data);
+        } else {
+          console.error("Error fetching seller profile:", error.message);
+          setSellerProfile(null);
+        }
+      } else {
+        setSellerProfile(null);
+      }
+    };
+    fetchSellerProfile();
+  }, [selectedProduct, supabase]);
 
   // ✅ Update price
   const updatePrice = async (id: string) => {
@@ -110,84 +144,97 @@ export default function Dashboard() {
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-    <div
-      className={`fixed z-40 inset-y-0 left-0 transform ${
-        sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      } w-64 bg-white shadow-lg transition-transform duration-200 ease-in-out md:translate-x-0`}
-    >
-      <div className="p-6 flex flex-col h-full">
-        {/* Header with title + close button */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-pink-600">CampusMart</h2>
-          <button
-            className="md:hidden text-gray-600 hover:text-pink-600"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-
-        <nav className="flex-1 space-y-4">
-          <Link
-            href="/dashboard"
-            className="block text-gray-800 hover:text-pink-600"
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/add-product"
-            className="block text-gray-800 hover:text-pink-600"
-          >
-            Add Product
-          </Link>
-          <Link
-            href="/profile"
-            className="block text-gray-800 hover:text-pink-600"
-          >
-            Profile
-          </Link>
-        </nav>
-
-        {/* ✅ User info at bottom */}
-        {user && (
-          <div className="mt-auto border-t pt-4">
-            <div className="flex items-center gap-3 mb-3">
-              <img
-                src={
-                  user.user_metadata?.avatar_url ||
-                  `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                    user.user_metadata?.full_name || user.email
-                  )}`
-                }
-                alt="avatar"
-                className="w-10 h-10 rounded-full border"
-              />
-              <div>
-                <p className="text-sm font-medium text-gray-800">
-                  {user.user_metadata?.full_name || "User"}
-                </p>
-                <p className="text-xs text-gray-500 truncate">{user.email}</p>
-              </div>
-            </div>
+      <div
+        className={`fixed z-40 inset-y-0 left-0 transform ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } w-64 bg-white shadow-lg transition-transform duration-200 ease-in-out md:translate-x-0`}
+      >
+        <div className="p-6 flex flex-col h-full">
+          {/* Header with title + close button */}
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-pink-600">CampusMart</h2>
             <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 text-red-600 hover:text-red-800"
+              className="md:hidden text-gray-600 hover:text-pink-600"
+              onClick={() => setSidebarOpen(false)}
             >
-              <LogOut size={18} /> Logout
+              <X className="w-6 h-6" />
             </button>
           </div>
-        )}
+
+          <nav className="flex-1 space-y-4">
+            <Link
+              href="/dashboard"
+              className="block text-gray-800 hover:text-pink-600"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/add-product"
+              className="block text-gray-800 hover:text-pink-600"
+            >
+              Add Product
+            </Link>
+            <Link
+              href="/profile"
+              className="block text-gray-800 hover:text-pink-600"
+            >
+              Profile
+            </Link>
+          </nav>
+
+          {/* ✅ User info at bottom */}
+        {/* ✅ User info at bottom */}
+          {user && (
+            <div className="mt-auto border-t pt-4">
+              <div className="flex items-center gap-3 mb-3">
+                <img
+                  src={
+                    user.profile?.avatar_url ||
+                    user.user_metadata?.avatar_url ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                      user.profile?.full_name ||
+                        user.user_metadata?.full_name ||
+                        user.email
+                    )}`
+                  }
+                  alt="avatar"
+                  className="w-10 h-10 rounded-full border"
+                />
+                <div>
+                  <p className="text-sm font-medium text-gray-800">
+                    {user.profile?.full_name ||
+                      user.user_metadata?.full_name ||
+                      "User"}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                  {/* ✅ Show university + graduation year if available */}
+                  {user.profile?.university && (
+                    <p className="text-xs text-gray-600">
+                      🎓 {user.profile.university}
+                      {user.profile.graduation_year && ` (${user.profile.graduation_year})`}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 text-red-600 hover:text-red-800"
+              >
+                <LogOut size={18} /> Logout
+              </button>
+            </div>
+          )}
+
+        </div>
       </div>
-    </div>
 
-    {/* ✅ Overlay for mobile (click to close) */}
-    {sidebarOpen && (
-      <div
-        className="fixed inset-0 bg-black/40 md:hidden"
-        onClick={() => setSidebarOpen(false)}
-      />
-    )}
-
+      {/* ✅ Overlay for mobile (click to close) */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
       {/* Main content */}
       <div className="flex-1 lg:ml-64 flex flex-col">
@@ -213,9 +260,13 @@ export default function Dashboard() {
             </div>
             <img
               src={
+                user?.profile?.avatar_url ||
                 user?.user_metadata?.avatar_url ||
                 `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                  user?.user_metadata?.full_name || user?.email || "User"
+                  user?.profile?.full_name ||
+                    user?.user_metadata?.full_name ||
+                    user?.email ||
+                    "User"
                 )}`
               }
               alt="user avatar"
@@ -342,9 +393,42 @@ export default function Dashboard() {
                 <p>
                   <strong>Category:</strong> {selectedProduct?.category}
                 </p>
-                <p>
-                  <strong>Seller:</strong> {selectedProduct?.seller}
-                </p>
+
+                {/* ✅ Seller info from profile */}
+                {sellerProfile ? (
+                  <div className="flex items-center gap-3 my-3">
+                    <img
+                      src={
+                        sellerProfile.avatar_url ||
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                          sellerProfile.full_name || "Seller"
+                        )}`
+                      }
+                      alt="seller"
+                      className="w-10 h-10 rounded-full border"
+                    />
+                    <div>
+                      <p className="font-medium text-gray-800">
+                        {sellerProfile.full_name || "Unnamed Seller"}
+                      </p>
+                      {sellerProfile.phone && (
+                        <p className="text-sm text-gray-600">
+                          📞 {sellerProfile.phone}
+                        </p>
+                      )}
+                      {sellerProfile.location && (
+                        <p className="text-sm text-gray-600">
+                          📍 {sellerProfile.location}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <p>
+                    <strong>Seller:</strong> {selectedProduct?.seller}
+                  </p>
+                )}
+
                 <p className="mb-4">
                   <strong>Description:</strong> {selectedProduct?.description}
                 </p>
