@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { createClient } from "/src/utils/supabase/client.ts";
 import { useAuth } from "/context/AuthContext";
+import { Plus } from "lucide-react";
 
 export default function ProfilePage() {
   const supabase = createClient();
-  const { user } = useAuth(); // ✅ get logged-in user
+  const { user } = useAuth();
   const [profile, setProfile] = useState({
     full_name: "",
     username: "",
@@ -22,7 +23,7 @@ export default function ProfilePage() {
   const [avatarFile, setAvatarFile] = useState(null);
   const [uploading, setUploading] = useState(false);
 
-  // ✅ Fetch profile on load
+  // ✅ Fetch profile
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user) return;
@@ -43,7 +44,7 @@ export default function ProfilePage() {
     fetchProfile();
   }, [user, supabase]);
 
-  // ✅ Upload avatar to Supabase
+  // ✅ Upload avatar
   const uploadAvatar = async () => {
     if (!avatarFile) return profile.avatar_url;
 
@@ -110,25 +111,45 @@ export default function ProfilePage() {
       <h1 className="text-2xl font-bold mb-4">My Profile</h1>
       <form onSubmit={handleSave} className="space-y-4">
         {/* Avatar Upload */}
-        <div className="flex flex-col items-center">
-          {profile.avatar_url ? (
-            <img
-              src={profile.avatar_url}
-              alt="Avatar"
-              className="w-24 h-24 rounded-full object-cover mb-2"
+        <div className="flex flex-col items-center relative">
+          <div className="relative w-24 h-24">
+            {profile.avatar_url || avatarFile ? (
+              <img
+                src={
+                  avatarFile
+                    ? URL.createObjectURL(avatarFile)
+                    : profile.avatar_url
+                }
+                alt="Avatar"
+                className="w-24 h-24 rounded-full object-cover border shadow-md"
+              />
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
+                No Image
+              </div>
+            )}
+
+            {/* Plus Button Overlay */}
+            <label
+              htmlFor="avatar-upload"
+              className="absolute bottom-0 right-0 bg-blue-600 text-white rounded-full p-2 cursor-pointer shadow-md hover:bg-blue-700"
+            >
+              <Plus size={16} />
+            </label>
+            <input
+              id="avatar-upload"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) =>
+                setAvatarFile(e.target.files?.[0] ? e.target.files[0] : null)
+              }
             />
-          ) : (
-            <div className="w-24 h-24 bg-gray-200 rounded-full mb-2 flex items-center justify-center">
-              <span className="text-gray-500">No Image</span>
-            </div>
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setAvatarFile(e.target.files[0])}
-            className="text-sm"
-          />
-          {uploading && <p className="text-sm text-gray-500">Uploading...</p>}
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            Tap the ➕ to upload a profile picture
+          </p>
+          {uploading && <p className="text-sm text-gray-400">Uploading...</p>}
         </div>
 
         {/* Profile Fields */}
