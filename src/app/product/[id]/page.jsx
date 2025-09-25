@@ -218,7 +218,7 @@ export default function ProductDetails() {
             <p className="flex items-center gap-2">
               <User size={18} className="text-pink-600" /> Seller:{" "}
               <span className="font-medium">
-                {product.Seller || "Unknown Seller"}
+                {product.seller || "Unknown Seller"}
               </span>
             </p>
             <p className="flex items-center gap-2">

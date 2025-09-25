@@ -1076,7 +1076,7 @@
 //     city: "",
 //     phone: "",
 //     email: "",
-//     seller: "" // ✅ added seller
+//     Seller: "" // ✅ added Seller
 //   });
 
 //   const [images, setImages] = useState([]);
@@ -1137,7 +1137,7 @@
 //           city: formData.city,
 //           phone: formData.phone,
 //           email: formData.email,
-//           seller: formData.seller, // ✅ seller added
+//           Seller: formData.Seller, // ✅ Seller added
 //           images: uploadedUrls
 //         }
 //       ]);
@@ -1156,7 +1156,7 @@
 //         city: "",
 //         phone: "",
 //         email: "",
-//         seller: "" // reset
+//         Seller: "" // reset
 //       });
 //       setImages([]);
 //     } catch (err) {
@@ -1206,9 +1206,9 @@
 //                   <User className="h-5 w-5 text-pink-600" /> Seller Name *
 //                 </Label>
 //                 <Input
-//                   placeholder="Enter seller's name"
-//                   value={formData.seller}
-//                   onChange={(e) => setFormData({ ...formData, seller: e.target.value })}
+//                   placeholder="Enter Seller's name"
+//                   value={formData.Seller}
+//                   onChange={(e) => setFormData({ ...formData, Seller: e.target.value })}
 //                   className="text-lg py-3"
 //                   required
 //                 />

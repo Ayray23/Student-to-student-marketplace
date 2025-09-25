@@ -15,7 +15,7 @@ export default function Dashboard() {
   const [newPrice, setNewPrice] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [sellerProfile, setSellerProfile] = useState<any>(null);
+  const [SellerProfile, setSellerProfile] = useState<any>(null);
 
   // ✅ Protect dashboard (redirect if not logged in) + fetch profile
   useEffect(() => {
@@ -64,7 +64,7 @@ export default function Dashboard() {
     fetchProducts();
   }, [supabase]);
 
-  // ✅ Fetch seller profile when modal opens
+  // ✅ Fetch Seller profile when modal opens
   useEffect(() => {
     const fetchSellerProfile = async () => {
       if (selectedProduct?.user_id) {
@@ -77,7 +77,7 @@ export default function Dashboard() {
         if (!error) {
           setSellerProfile(data);
         } else {
-          console.error("Error fetching seller profile:", error.message);
+          console.error("Error fetching Seller profile:", error.message);
           setSellerProfile(null);
         }
       } else {
@@ -395,37 +395,37 @@ export default function Dashboard() {
                 </p>
 
                 {/* ✅ Seller info from profile */}
-                {sellerProfile ? (
+                {SellerProfile ? (
                   <div className="flex items-center gap-3 my-3">
                     <img
                       src={
-                        sellerProfile.avatar_url ||
+                        SellerProfile.avatar_url ||
                         `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                          sellerProfile.full_name || "Seller"
+                          SellerProfile.full_name || "Seller"
                         )}`
                       }
-                      alt="seller"
+                      alt="Seller"
                       className="w-10 h-10 rounded-full border"
                     />
                     <div>
                       <p className="font-medium text-gray-800">
-                        {sellerProfile.full_name || "Unnamed Seller"}
+                        {SellerProfile.full_name || "Unnamed Seller"}
                       </p>
-                      {sellerProfile.phone && (
+                      {SellerProfile.phone && (
                         <p className="text-sm text-gray-600">
-                          📞 {sellerProfile.phone}
+                          📞 {SellerProfile.phone}
                         </p>
                       )}
-                      {sellerProfile.location && (
+                      {SellerProfile.location && (
                         <p className="text-sm text-gray-600">
-                          📍 {sellerProfile.location}
+                          📍 {SellerProfile.location}
                         </p>
                       )}
                     </div>
                   </div>
                 ) : (
                   <p>
-                    <strong>Seller:</strong> {selectedProduct?.seller}
+                    <strong>Seller:</strong> {selectedProduct?.Seller}
                   </p>
                 )}
 

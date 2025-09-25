@@ -37,7 +37,7 @@ export default function AddProduct() {
 
   // ✅ categories + location data
   const categories = {
-    electronics: ["Mobile Phones", "Laptops", "TVs", "Audio", "Gaming"],
+    electronics: ["Mobile Phones", "Laptops", "TVs", "Audio", "Gaming","Mobile phone accessories"],
     fashion: ["Men's Clothing", "Women's Clothing", "Shoes", "Bags", "Watches"],
     vehicles: ["Cars", "Motorcycles", "Buses", "Trucks", "Parts"],
     home: ["Furniture", "Appliances", "Decor", "Garden", "Tools"],
