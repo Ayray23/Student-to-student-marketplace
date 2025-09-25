@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "/src/utils/supabase/client.ts";
+import { createClient } from "/src/utils/supabase/client";
 import { useAuth } from "/context/AuthContext";
 import { Plus } from "lucide-react";
 
