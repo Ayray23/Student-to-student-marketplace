@@ -21,24 +21,26 @@ export default function Dashboard() {
   useEffect(() => {
     const checkUser = async () => {
       const {
-        data: { user },
+        data: { user: authUser },
       } = await supabase.auth.getUser();
 
-      if (!user) {
+      if (!authUser) {
         window.location.href = "/login";
       } else {
-        const { data: profile, error } = await supabase
+        // fetch profile from custom table
+        const { data: profile } = await supabase
           .from("profiles")
           .select("*")
-          .eq("user_id", user.id)
+          .eq("user_id", authUser.id)
           .single();
 
-        if (error) {
-          console.error("Error fetching profile:", error.message);
-          setUser(user);
-        } else {
-          setUser({ ...user, profile });
-        }
+        // merge both
+        setUser({
+          id: authUser.id,
+          email: authUser.email,
+          ...authUser.user_metadata, // google full_name, avatar_url, etc.
+          profile, // custom profile data
+        });
       }
     };
     checkUser();
@@ -68,18 +70,12 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchSellerProfile = async () => {
       if (selectedProduct?.user_id) {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from("profiles")
           .select("*")
           .eq("user_id", selectedProduct.user_id)
           .single();
-
-        if (!error) {
-          setSellerProfile(data);
-        } else {
-          console.error("Error fetching Seller profile:", error.message);
-          setSellerProfile(null);
-        }
+        setSellerProfile(data || null);
       } else {
         setSellerProfile(null);
       }
@@ -150,7 +146,7 @@ export default function Dashboard() {
         } w-64 bg-white shadow-lg transition-transform duration-200 ease-in-out md:translate-x-0`}
       >
         <div className="p-6 flex flex-col h-full">
-          {/* Header with title + close button */}
+          {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-pink-600">CampusMart</h2>
             <button
@@ -162,38 +158,28 @@ export default function Dashboard() {
           </div>
 
           <nav className="flex-1 space-y-4">
-            <Link
-              href="/dashboard"
-              className="block text-gray-800 hover:text-pink-600"
-            >
+            <Link href="/dashboard" className="block text-gray-800 hover:text-pink-600">
               Dashboard
             </Link>
-            <Link
-              href="/add-product"
-              className="block text-gray-800 hover:text-pink-600"
-            >
+            <Link href="/add-product" className="block text-gray-800 hover:text-pink-600">
               Add Product
             </Link>
-            <Link
-              href="/profile"
-              className="block text-gray-800 hover:text-pink-600"
-            >
+            <Link href="/profile" className="block text-gray-800 hover:text-pink-600">
               Profile
             </Link>
           </nav>
 
           {/* ✅ User info at bottom */}
-        {/* ✅ User info at bottom */}
           {user && (
             <div className="mt-auto border-t pt-4">
               <div className="flex items-center gap-3 mb-3">
                 <img
                   src={
                     user.profile?.avatar_url ||
-                    user.user_metadata?.avatar_url ||
+                    user.avatar_url ||
                     `https://ui-avatars.com/api/?name=${encodeURIComponent(
                       user.profile?.full_name ||
-                        user.user_metadata?.full_name ||
+                        user.full_name ||
                         user.email
                     )}`
                   }
@@ -202,16 +188,14 @@ export default function Dashboard() {
                 />
                 <div>
                   <p className="text-sm font-medium text-gray-800">
-                    {user.profile?.full_name ||
-                      user.user_metadata?.full_name ||
-                      "User"}
+                    {user.profile?.full_name || user.full_name || "User"}
                   </p>
                   <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                  {/* ✅ Show university + graduation year if available */}
                   {user.profile?.university && (
                     <p className="text-xs text-gray-600">
                       🎓 {user.profile.university}
-                      {user.profile.graduation_year && ` (${user.profile.graduation_year})`}
+                      {user.profile.graduation_year &&
+                        ` (${user.profile.graduation_year})`}
                     </p>
                   )}
                 </div>
@@ -224,11 +208,10 @@ export default function Dashboard() {
               </button>
             </div>
           )}
-
         </div>
       </div>
 
-      {/* ✅ Overlay for mobile (click to close) */}
+      {/* ✅ Overlay for mobile */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/40 md:hidden"
@@ -261,10 +244,10 @@ export default function Dashboard() {
             <img
               src={
                 user?.profile?.avatar_url ||
-                user?.user_metadata?.avatar_url ||
+                user?.avatar_url ||
                 `https://ui-avatars.com/api/?name=${encodeURIComponent(
                   user?.profile?.full_name ||
-                    user?.user_metadata?.full_name ||
+                    user?.full_name ||
                     user?.email ||
                     "User"
                 )}`
