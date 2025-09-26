@@ -242,7 +242,7 @@ export default function Dashboard() {
               </div>
 
               {/* Carousel wrapper */}
-              <div className="overflow-hidden relative h-[60vh]">
+              <div className="overflow-hidden relative h-[40vh] md:h-[50vh] lg:h-[60vh]">
                 <div
                   className="flex transition-transform duration-500 ease-in-out h-full"
                   style={{ transform: `translateX(-${currentSlide * 100}%)` }}
