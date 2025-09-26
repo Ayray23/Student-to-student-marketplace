@@ -8,10 +8,12 @@ import { Eye, EyeOff } from "lucide-react";
 import { FaGoogle } from "react-icons/fa";
 
 export default function SignUpPage() {
-  const { register, googleLogin } = useAuth(); // ✅ fixed
+  const { register, googleLogin } = useAuth();
   const router = useRouter();
 
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -39,7 +41,10 @@ export default function SignUpPage() {
     }
 
     try {
-      await register(email.trim(), password); // ✅ use register
+      await register(email.trim(), password, {
+        username: username.trim(),
+        phone: phone.trim(),
+      });
       router.push("/dashboard");
     } catch (err) {
       setError(err.message || "Failed to create account");
@@ -50,7 +55,7 @@ export default function SignUpPage() {
 
   const handleGoogleSignup = async () => {
     try {
-      await googleLogin(); // ✅ use googleLogin
+      await googleLogin();
       router.push("/dashboard");
     } catch (err) {
       setError("Google sign-in failed");
@@ -68,6 +73,27 @@ export default function SignUpPage() {
         {error && <p className="text-red-300 text-sm mb-4 text-center">{error}</p>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Username */}
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+            className="w-full px-4 py-3 rounded-lg bg-white/30 dark:bg-gray-700/30 text-white placeholder-gray-200 focus:ring-2 focus:ring-pink-400 outline-none"
+          />
+
+          {/* Phone */}
+          <input
+            type="tel"
+            placeholder="Phone Number"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            required
+            className="w-full px-4 py-3 rounded-lg bg-white/30 dark:bg-gray-700/30 text-white placeholder-gray-200 focus:ring-2 focus:ring-pink-400 outline-none"
+          />
+
+          {/* Email */}
           <input
             type="email"
             placeholder="Email"
@@ -77,6 +103,7 @@ export default function SignUpPage() {
             className="w-full px-4 py-3 rounded-lg bg-white/30 dark:bg-gray-700/30 text-white placeholder-gray-200 focus:ring-2 focus:ring-pink-400 outline-none"
           />
 
+          {/* Password */}
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -97,6 +124,7 @@ export default function SignUpPage() {
             </button>
           </div>
 
+          {/* Password criteria */}
           {showCriteria && (
             <div className="mt-2 text-xs space-y-1">
               <p className={passwordCriteria.length ? "text-emerald-400" : "text-red-400"}>• At least 8 characters</p>
@@ -107,6 +135,7 @@ export default function SignUpPage() {
             </div>
           )}
 
+          {/* Confirm Password */}
           <input
             type="password"
             placeholder="Confirm Password"
@@ -116,6 +145,7 @@ export default function SignUpPage() {
             className="w-full px-4 py-3 rounded-lg bg-white/30 dark:bg-gray-700/30 text-white placeholder-gray-200 focus:ring-2 focus:ring-pink-400 outline-none"
           />
 
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}

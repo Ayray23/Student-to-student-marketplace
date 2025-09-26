@@ -1,9 +1,7 @@
-// /context/AuthContext.tsx
 "use client";
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { createClient } from "/src/utils/supabase/client.ts";
-
 
 const AuthContext = createContext(null);
 
@@ -11,13 +9,38 @@ export const AuthProvider = ({ children }) => {
   const supabase = createClient();
   const [user, setUser] = useState(null);
 
-  // ✅ Register user
-  const register = async (email, password) => {
+  // ✅ Register user + create profile
+  const register = async (email, password, { username, phone }) => {
+    // Step 1: Sign up with Supabase Auth
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
+
     if (error) throw error;
+
+    // Step 2: Insert profile row if user is created
+    if (data.user) {
+      const { error: profileError } = await supabase.from("profiles").insert([
+        {
+          user_id: data.user.id,
+          username,
+          phone,
+          email: data.user.email, // optional
+          full_name: "", // placeholder
+          bio: "",
+          location: "",
+          university: "",
+          graduation_year: null,
+        },
+      ]);
+
+      if (profileError) {
+        console.error("❌ Profile creation failed:", profileError.message);
+        throw profileError;
+      }
+    }
+
     return data;
   };
 
@@ -41,6 +64,30 @@ export const AuthProvider = ({ children }) => {
       },
     });
     if (error) throw error;
+
+    // (Optional) create profile for Google users
+    if (data?.user) {
+      const { error: profileError } = await supabase.from("profiles").insert([
+        {
+          user_id: data.user.id,
+          username: data.user.user_metadata?.full_name || `user_${Date.now()}`,
+          phone: null,
+          email: data.user.email,
+          full_name: data.user.user_metadata?.full_name || "",
+          avatar_url: data.user.user_metadata?.avatar_url || null,
+          bio: "",
+          location: "",
+          university: "",
+          graduation_year: null,
+        },
+      ]).single();
+
+      if (profileError && profileError.code !== "23505") {
+        // ignore duplicate key error if profile already exists
+        console.error("❌ Google profile creation failed:", profileError.message);
+      }
+    }
+
     return data;
   };
 
