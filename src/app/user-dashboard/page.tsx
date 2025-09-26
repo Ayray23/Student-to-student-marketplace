@@ -46,25 +46,30 @@ export default function Dashboard() {
     checkUser();
   }, [supabase]);
 
-  // ✅ Fetch all products
-  useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .order("created_at", { ascending: false });
+// ✅ Fetch only logged-in user's products
+useEffect(() => {
+  const fetchProducts = async () => {
+    if (!user) return; // wait until user is loaded
+    setLoading(true);
 
-      if (error) {
-        console.error(error);
-        toast.error("Failed to load products");
-      } else {
-        setProducts(data || []);
-      }
-      setLoading(false);
-    };
-    fetchProducts();
-  }, [supabase]);
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("seller_id", user.id) // 🔑 only fetch this user’s products
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+      toast.error("Failed to load products");
+    } else {
+      setProducts(data || []);
+    }
+    setLoading(false);
+  };
+
+  fetchProducts();
+}, [supabase, user]); // 🔑 refetch when user changes
+
 
   // ✅ Fetch Seller profile when modal opens
   useEffect(() => {
