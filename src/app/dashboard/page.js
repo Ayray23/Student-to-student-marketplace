@@ -145,7 +145,7 @@ export default function Dashboard() {
           <p className="text-base sm:text-lg mb-6 text-white/90">
             Connect with fellow students for amazing deals!
           </p>
-          <div className="max-w-xl mx-auto flex flex-col sm:flex-row items-center bg-white rounded-full shadow-lg overflow-hidden">
+          <div className="max-w-xl mx-auto flex flex-row items-center bg-white rounded-full shadow-lg overflow-hidden">
             <div className="flex items-center w-full">
               <Search className="ml-4 text-gray-400 shrink-0" size={20} />
               <input
@@ -162,7 +162,7 @@ export default function Dashboard() {
                 else setError("");
                 setShowFavorites(false);
               }}
-              className="px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-medium hover:from-pink-700 hover:to-purple-700 transition"
+              className="px-2 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-medium hover:from-pink-700 hover:to-purple-700 transition"
             >
               Search
             </button>
