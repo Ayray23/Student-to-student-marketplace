@@ -186,12 +186,12 @@ export default function Dashboard() {
       </div>
 
       {/* Hero */}
-      <div className="relative bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-600 pb-10 pt-6 sm:pt-12">
+      <div className="relative  bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-600 pb-10 pt-6 sm:pt-12">
         <div className="max-w-7xl mx-auto px-4 text-center text-white">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 leading-tight">
             Connect with fellow students — buy & sell on campus.
           </h2>
-          <p className="text-sm sm:text-base text-white/90 mb-6">
+          <p className="text-sm sm:text-base text-white/90 mb-20">
             Carefully curated student marketplace — safe and simple.
           </p>
         </div>
@@ -236,6 +236,7 @@ export default function Dashboard() {
         {/* Main content (products + carousel) */}
         <main id="product-list" className="md:col-span-4">
           {/* Featured carousel */}
+         {/* Featured carousel - clicking goes to /product/:id */}
           {featured.length > 0 && (
             <div className="mb-6">
               <div className="flex justify-between items-center mb-3">
@@ -252,38 +253,46 @@ export default function Dashboard() {
                   style={{ transform: `translateX(-${currentSlide * 100}%)` }}
                 >
                   {featured.map((p, i) => (
-                    <div key={i} className="flex-shrink-0 w-full px-4 py-6">
+                    <Link
+                      key={i}
+                      href={`/product/${p.id ?? p._id ?? ''}`}
+                      className="flex-shrink-0 w-full px-4 py-6 cursor-pointer"
+                      aria-label={`View ${p.title || p.name || 'product'}`}
+                    >
                       <div className="flex flex-col md:flex-row gap-4 items-center">
                         <div className="w-full md:w-1/2 flex justify-center items-center">
                           <img
                             src={Array.isArray(p.images) ? p.images[0] : p.image}
-                            alt={p.title || p.name}
+                            alt={p.title || p.name || 'product image'}
                             className="max-h-[320px] object-contain"
                           />
                         </div>
                         <div className="md:w-1/2">
                           <h4 className="text-lg font-semibold">{p.title || p.name}</h4>
                           <p className="text-pink-600 font-bold mt-2">₦{p.price}</p>
-                          {/* <p className="text-sm text-gray-600 mt-2 line-clamp-3">{p.description}</p> */}
+                          {/* {p.description && (
+                            <p className="text-sm text-gray-600 mt-2 line-clamp-3">{p.description}</p>
+                          )} */}
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>
 
-              {/* dots */}
               <div className="flex justify-center gap-2 mt-3">
                 {Array.from({ length: slides }).map((_, i) => (
                   <button
                     key={i}
                     onClick={() => setCurrentSlide(i)}
                     className={`w-3 h-3 rounded-full ${currentSlide === i ? "bg-pink-600" : "bg-gray-300 dark:bg-gray-600"}`}
+                    aria-label={`Go to slide ${i + 1}`}
                   />
                 ))}
               </div>
             </div>
           )}
+
 
           {/* Products header */}
           <div className="flex items-center justify-between mb-4">
