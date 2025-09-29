@@ -37,7 +37,6 @@ export default function Dashboard() {
 
   const supabase = createClient();
 
-  
   // ✅ Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
@@ -57,7 +56,6 @@ export default function Dashboard() {
     };
     fetchProducts();
   }, []);
-
 
   // ✅ Add/remove favorites
   const toggleFavorite = (id) => {
@@ -85,7 +83,6 @@ export default function Dashboard() {
     );
   }
 
-  
   // ✅ Featured products (only unsold)
   const featured = products.filter((p) => p.is_sold === false).slice(0, 6);
   const slides = featured.length;
@@ -145,15 +142,17 @@ export default function Dashboard() {
           <p className="text-base sm:text-lg mb-6 text-white/90">
             Connect with fellow students for amazing deals!
           </p>
-          <div className="max-w-xl mx-auto flex flex-row items-center bg-white rounded-full shadow-lg overflow-hidden">
-            <div className="flex items-center w-full">
+
+          {/* ✅ Fixed Search Bar */}
+          <div className="max-w-xl mx-auto flex flex-nowrap items-center bg-white rounded-full shadow-lg overflow-hidden sticky top-20 z-40">
+            <div className="flex items-center flex-1">
               <Search className="ml-4 text-gray-400 shrink-0" size={20} />
               <input
                 type="text"
                 placeholder="Search for products..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="flex-1 px-4 py-3 outline-none text-gray-700 text-sm sm:text-base"
+                className="w-full px-4 py-3 outline-none text-gray-700 text-sm sm:text-base"
               />
             </div>
             <button
@@ -162,12 +161,13 @@ export default function Dashboard() {
                 else setError("");
                 setShowFavorites(false);
               }}
-              className="px-2 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-medium hover:from-pink-700 hover:to-purple-700 transition"
+              className="whitespace-nowrap px-4 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-medium hover:from-pink-700 hover:to-purple-700 transition"
             >
               Search
             </button>
           </div>
         </div>
+
         {/* Curve */}
         <div className="absolute bottom-0 left-0 right-0">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 120" className="w-full">
@@ -242,7 +242,7 @@ export default function Dashboard() {
               </div>
 
               {/* Carousel wrapper */}
-              <div className="overflow-hidden relative h-[40vh] md:h-[50] lg:h-[60vh]">
+              <div className="overflow-hidden relative h-[40vh] md:h-[50vh] lg:h-[60vh]">
                 <div
                   className="flex transition-transform duration-500 ease-in-out h-full"
                   style={{ transform: `translateX(-${currentSlide * 100}%)` }}
@@ -276,7 +276,6 @@ export default function Dashboard() {
                 </div>
               </div>
 
-
               {/* Dots */}
               <div className="flex justify-center mt-4 space-x-2">
                 {Array.from({ length: slides }).map((_, i) => (
@@ -304,8 +303,9 @@ export default function Dashboard() {
                 : `${selectedCategory} Products`}
             </h2>
 
+            {/* Loading skeleton */}
             {loading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                 {Array.from({ length: 8 }).map((_, i) => (
                   <div
                     key={i}
@@ -315,7 +315,8 @@ export default function Dashboard() {
               </div>
             ) : filteredProducts.length > 0 ? (
               <>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
+                {/* ✅ Fixed Product Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                   {filteredProducts.slice(0, visibleCount).map((product) => (
                     <ProductCard
                       key={product.id}
@@ -325,11 +326,10 @@ export default function Dashboard() {
                     />
                   ))}
                 </div>
+
                 <div ref={loaderRef} className="h-12 flex justify-center items-center">
                   {visibleCount < filteredProducts.length && (
-                    <p className="text-gray-500 dark:text-gray-300 text-sm">
-                      Loading more...
-                    </p>
+                    <p className="text-gray-500 dark:text-gray-300 text-sm">Loading more...</p>
                   )}
                 </div>
               </>
@@ -367,23 +367,36 @@ export default function Dashboard() {
           <div>
             <h3 className="text-lg font-bold mb-4">CampusMart</h3>
             <p className="text-gray-400 text-sm">
-              A marketplace built for students, by students. Buy and sell with ease within your campus.
+              A marketplace built for students, by students. Buy and sell with ease within your
+              campus.
             </p>
           </div>
           <div>
             <h3 className="text-lg font-bold mb-4">Quick Links</h3>
             <ul className="space-y-2 text-gray-400 text-sm">
-              <li><Link href="/">Home</Link></li>
-              <li><Link href="/add-product">Sell Product</Link></li>
-              <li><Link href="/favorites">Favorites</Link></li>
+              <li>
+                <Link href="/">Home</Link>
+              </li>
+              <li>
+                <Link href="/add-product">Sell Product</Link>
+              </li>
+              <li>
+                <Link href="/favorites">Favorites</Link>
+              </li>
             </ul>
           </div>
           <div>
             <h3 className="text-lg font-bold mb-4">Support</h3>
             <ul className="space-y-2 text-gray-400 text-sm">
-              <li><Link href="#">Help Center</Link></li>
-              <li><Link href="#">Contact Us</Link></li>
-              <li><Link href="#">Report Issue</Link></li>
+              <li>
+                <Link href="#">Help Center</Link>
+              </li>
+              <li>
+                <Link href="#">Contact Us</Link>
+              </li>
+              <li>
+                <Link href="#">Report Issue</Link>
+              </li>
             </ul>
           </div>
           <div>
@@ -447,10 +460,10 @@ function ProductCard({ product, isFavorite, toggleFavorite, badge }) {
 
 function ServiceCard({ icon, title, description }) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 text-center hover:shadow-lg hover:scale-105 transition">
-      <div className="mb-4 flex justify-center">{icon}</div>
-      <h4 className="font-bold text-lg text-gray-800 dark:text-white mb-2">{title}</h4>
-      <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow hover:shadow-lg transition flex flex-col items-center text-center">
+      {icon}
+      <h3 className="font-semibold text-lg mt-3 text-gray-800 dark:text-white">{title}</h3>
+      <p className="text-gray-500 dark:text-gray-300 text-sm mt-2">{description}</p>
     </div>
   );
 }
