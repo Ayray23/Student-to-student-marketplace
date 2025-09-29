@@ -322,13 +322,14 @@ export default function Dashboard() {
                 ))}
               </div>
 
-              <div ref={loaderRef} className="mt-6 flex justify-center items-center">
+              {/* <div ref={loaderRef} className="mt-6 flex justify-center items-center">
                 {visibleCount < filteredProducts.length ? (
                   <p className="text-gray-600 dark:text-gray-300">Loading more...</p>
-                ) : (
+                  ) : (
                   <p className="text-gray-500 dark:text-gray-400">End of results</p>
-                )}
-              </div>
+                 )
+              }
+              </div> */}
             </>
           ) : (
             <p className="text-gray-500 dark:text-gray-400">No products found.</p>
