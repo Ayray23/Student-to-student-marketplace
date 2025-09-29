@@ -1,3 +1,4 @@
+// /src/app/dashboard/page.jsx
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -21,6 +22,8 @@ import Navbar from "/src/components/navbar.tsx";
 const categories = ["All", "Books", "Fashion", "Electronics", "Furniture", "Others"];
 
 export default function Dashboard() {
+  const supabase = createClient();
+
   const [products, setProducts] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -31,244 +34,237 @@ export default function Dashboard() {
   const [showCategories, setShowCategories] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Infinite scroll states
+  // infinite scroll
   const [visibleCount, setVisibleCount] = useState(12);
   const loaderRef = useRef(null);
 
-  const supabase = createClient();
-
-  // ✅ Fetch products
+  // fetch products once
   useEffect(() => {
+    let mounted = true;
     const fetchProducts = async () => {
       setLoading(true);
       const { data, error } = await supabase
         .from("products")
         .select("*")
-        .eq("is_sold", false); // 🔥 Only fetch unsold products
+        .eq("is_sold", false)
+        .order("created_at", { ascending: false });
 
+      if (!mounted) return;
       if (error) {
-        console.error(error);
+        console.error("Fetch products error:", error);
         setError("Failed to load products.");
       } else {
         setProducts(data || []);
+        setError("");
       }
       setLoading(false);
     };
     fetchProducts();
-  }, []);
+    return () => { mounted = false; };
+  }, [supabase]);
 
-  // ✅ Add/remove favorites
+  // toggle favorite (local only)
   const toggleFavorite = (id) => {
-    setFavorites((prev) =>
-      prev.includes(id) ? prev.filter((fid) => fid !== id) : [...prev, id]
-    );
+    setFavorites((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
-  // ✅ Filtering logic
+  // filtering logic
   let filteredProducts = products;
 
   if (showFavorites) {
     filteredProducts = products.filter((p) => favorites.includes(p.id));
-  } else if (selectedCategory !== "All") {
+  } else if (selectedCategory && selectedCategory !== "All") {
     filteredProducts = products.filter(
-      (p) => p.category?.toLowerCase() === selectedCategory.toLowerCase()
+      (p) => (p.category || "").toLowerCase() === selectedCategory.toLowerCase()
     );
   }
 
   if (query.trim()) {
+    const q = query.toLowerCase();
     filteredProducts = filteredProducts.filter(
       (p) =>
-        p.name?.toLowerCase().includes(query.toLowerCase()) ||
-        p.category?.toLowerCase().includes(query.toLowerCase())
+        ((p.title || p.name || "").toLowerCase().includes(q)) ||
+        ((p.description || "").toLowerCase().includes(q)) ||
+        ((p.category || "").toLowerCase().includes(q))
     );
   }
 
-  // ✅ Featured products (only unsold)
-  const featured = products.filter((p) => p.is_sold === false).slice(0, 6);
-  const slides = featured.length;
+  // featured
+  const featured = products.filter((p) => !p.is_sold).slice(0, 6);
+  const slides = Math.max(1, featured.length);
 
-  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides);
-  const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + slides) % slides);
+  // carousel controls
+  const nextSlide = () => setCurrentSlide((s) => (s + 1) % slides);
+  const prevSlide = () => setCurrentSlide((s) => (s - 1 + slides) % slides);
 
-  // Autoplay every 4s
   useEffect(() => {
     if (slides > 1) {
-      const timer = setInterval(() => {
-        setCurrentSlide((prev) => (prev + 1) % slides);
-      }, 4000);
-      return () => clearInterval(timer);
+      const t = setInterval(() => setCurrentSlide((s) => (s + 1) % slides), 4000);
+      return () => clearInterval(t);
     }
   }, [slides]);
 
-  // ✅ Infinite scroll observer
+  // infinite scroll observer
   const handleObserver = useCallback(
     (entries) => {
       const target = entries[0];
-      if (target.isIntersecting && visibleCount < filteredProducts.length) {
-        setVisibleCount((prev) => prev + 8); // Load 8 more
+      if (target && target.isIntersecting && visibleCount < filteredProducts.length) {
+        setVisibleCount((v) => v + 8);
       }
     },
     [visibleCount, filteredProducts.length]
   );
 
   useEffect(() => {
-    const option = { root: null, rootMargin: "20px", threshold: 0.2 };
+    const option = { root: null, rootMargin: "200px", threshold: 0.2 };
     const observer = new IntersectionObserver(handleObserver, option);
-    if (loaderRef.current) observer.observe(loaderRef.current);
+    const el = loaderRef.current;
+    if (el) observer.observe(el);
     return () => {
-      if (loaderRef.current) observer.unobserve(loaderRef.current);
+      if (el) observer.unobserve(el);
     };
   }, [handleObserver]);
 
+  // search handler (keeps existing query logic but triggers UI)
+  const handleSearch = (e) => {
+    e?.preventDefault();
+    setShowFavorites(false);
+    if (!query.trim()) {
+      setError("Type something to search");
+      return;
+    }
+    setError("");
+    // filteredProducts will reactively update via state `query`
+    // reset visibleCount when performing search
+    setVisibleCount(12);
+    // optionally scroll to product list
+    const el = document.getElementById("product-list");
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <section className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Navbar (sticky) */}
+      {/* Navbar */}
       <div className="sticky top-0 z-50">
         <Navbar
-          setSelectedCategory={setSelectedCategory}
+          setSelectedCategory={(c) => { setSelectedCategory(c); setShowFavorites(false); setQuery(""); }}
           setQuery={setQuery}
-          setShowFavorites={setShowFavorites}
+          setShowFavorites={(v) => { setShowFavorites(v); }}
           showFavorites={showFavorites}
           favorites={favorites}
         />
       </div>
 
-      {/* Hero */}
-      <div className="relative bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-600 pb-20 pt-12 sm:pt-16 overflow-hidden">
-        <div className="text-center text-white relative z-10 px-4">
-          <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-4 animate-pulse">
-            What are you looking to buy or sell? 🎓
-          </h2>
-          <p className="text-base sm:text-lg mb-6 text-white/90">
-            Connect with fellow students for amazing deals!
-          </p>
-
-          {/* ✅ Fixed Search Bar */}
-          <div className="max-w-xl mx-auto flex flex-nowrap items-center bg-white rounded-full shadow-lg overflow-hidden sticky top-20 z-40">
-            <div className="flex items-center flex-1">
-              <Search className="ml-4 text-gray-400 shrink-0" size={20} />
+      {/* Sticky search bar just below navbar */}
+      <div className="sticky top-16 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <form onSubmit={handleSearch} className="flex gap-2 items-center">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <div className="pl-3 pr-2 flex items-center">
+                <Search className="text-gray-500" size={18} />
+              </div>
               <input
-                type="text"
-                placeholder="Search for products..."
+                aria-label="Search products"
+                className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                placeholder="Search products, categories or descriptions..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="w-full px-4 py-3 outline-none text-gray-700 text-sm sm:text-base"
               />
             </div>
+
             <button
-              onClick={() => {
-                if (!query.trim()) setError("Type something to search");
-                else setError("");
-                setShowFavorites(false);
-              }}
-              className="whitespace-nowrap px-4 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-medium hover:from-pink-700 hover:to-purple-700 transition"
+              type="submit"
+              onClick={handleSearch}
+              className="whitespace-nowrap px-4 py-2 rounded-lg bg-pink-600 hover:bg-pink-700 text-white font-medium"
             >
               Search
             </button>
-          </div>
+          </form>
+
+          {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
+        </div>
+      </div>
+
+      {/* Hero */}
+      <div className="relative bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-600 pb-10 pt-6 sm:pt-12">
+        <div className="max-w-7xl mx-auto px-4 text-center text-white">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 leading-tight">
+            Connect with fellow students — buy & sell on campus.
+          </h2>
+          <p className="text-sm sm:text-base text-white/90 mb-6">
+            Carefully curated student marketplace — safe and simple.
+          </p>
         </div>
 
-        {/* Curve */}
+        {/* curve */}
         <div className="absolute bottom-0 left-0 right-0">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 120" className="w-full">
-            <path
-              className="fill-gray-50 dark:fill-gray-900"
-              d="M0,64L48,69.3C96,75,192,85,288,80C384,75,480,53,576,48C672,43,768,53,864,58.7C960,64,1056,64,1152,58.7C1248,53,1344,43,1392,37.3L1440,32L1440,120L0,120Z"
-            ></path>
+            <path className="fill-gray-50 dark:fill-gray-900"
+              d="M0,64L48,69.3C96,75,192,85,288,80C384,75,480,53,576,48C672,43,768,53,864,58.7C960,64,1056,64,1152,58.7C1248,53,1344,43,1392,37.3L1440,32L1440,120L0,120Z" />
           </svg>
         </div>
       </div>
 
       {/* Layout */}
-      <div className="flex flex-col md:flex-row max-w-7xl mx-auto mt-10 px-4 gap-6">
-        {/* Sidebar / Categories */}
-        <aside className="w-full md:w-1/5 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 h-fit">
+      <div className="max-w-7xl mx-auto px-4 mt-8 mb-12 grid grid-cols-1 md:grid-cols-5 gap-6">
+        {/* Categories sidebar */}
+        <aside className="md:col-span-1 bg-white dark:bg-gray-800 rounded-lg shadow p-4">
           <button
             className="w-full flex justify-between items-center md:hidden px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold"
-            onClick={() => setShowCategories(!showCategories)}
+            onClick={() => setShowCategories((s) => !s)}
           >
             Categories {showCategories ? <ChevronUp /> : <ChevronDown />}
           </button>
-          <ul
-            className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-1 gap-2 mt-4 md:mt-0 ${
-              showCategories ? "block" : "hidden md:block"
-            }`}
-          >
+
+          <ul className={`mt-4 ${showCategories ? "block" : "hidden md:block"}`}>
             {categories.map((cat) => (
-              <li key={cat}>
+              <li key={cat} className="mb-2">
                 <button
-                  onClick={() => {
-                    setSelectedCategory(cat);
-                    setShowFavorites(false);
-                    setQuery("");
-                    if (window.innerWidth < 768) setShowCategories(false);
-                  }}
-                  className={`flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm sm:text-base ${
-                    selectedCategory === cat
-                      ? "bg-pink-100 text-pink-600 font-semibold"
-                      : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                  onClick={() => { setSelectedCategory(cat); setShowFavorites(false); setQuery(""); }}
+                  className={`w-full text-left px-3 py-2 rounded-md flex justify-between items-center ${
+                    selectedCategory === cat ? "bg-pink-50 text-pink-600 font-semibold" : "hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
                 >
-                  {cat} <ChevronRight size={14} />
+                  <span className="capitalize">{cat}</span>
+                  <ChevronRight size={14} />
                 </button>
               </li>
             ))}
           </ul>
         </aside>
 
-        {/* Main */}
-        <main className="flex-1">
-          {/* Featured Carousel */}
+        {/* Main content (products + carousel) */}
+        <main id="product-list" className="md:col-span-4">
+          {/* Featured carousel */}
           {featured.length > 0 && (
-            <div className="mb-10">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">
-                  🔥 Featured Products
-                </h2>
-                <div className="flex gap-2">
-                  <button
-                    onClick={prevSlide}
-                    className="p-2 rounded-full bg-white dark:bg-gray-700 shadow hover:shadow-md transition"
-                  >
-                    ‹
-                  </button>
-                  <button
-                    onClick={nextSlide}
-                    className="p-2 rounded-full bg-white dark:bg-gray-700 shadow hover:shadow-md transition"
-                  >
-                    ›
-                  </button>
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-lg font-bold text-gray-800 dark:text-white">🔥 Featured</h3>
+                <div className="flex items-center gap-2">
+                  <button onClick={prevSlide} className="p-2 rounded-md bg-white dark:bg-gray-700 shadow">‹</button>
+                  <button onClick={nextSlide} className="p-2 rounded-md bg-white dark:bg-gray-700 shadow">›</button>
                 </div>
               </div>
 
-              {/* Carousel wrapper */}
-              <div className="overflow-hidden relative h-[40vh] md:h-[50vh] lg:h-[60vh]">
+              <div className="relative overflow-hidden rounded-xl bg-white dark:bg-gray-800 shadow">
                 <div
-                  className="flex transition-transform duration-500 ease-in-out h-full"
+                  className="flex transition-transform duration-500 ease-in-out"
                   style={{ transform: `translateX(-${currentSlide * 100}%)` }}
                 >
-                  {featured.map((product, i) => (
-                    <div
-                      key={i}
-                      className="w-full flex-shrink-0 px-4 h-full"
-                      style={{ flex: "0 0 100%" }}
-                    >
-                      <div className="bg-white dark:bg-gray-800 rounded-xl shadow h-full flex flex-col">
-                        {/* Image fills most of the height */}
-                        <div className="flex-1 overflow-hidden rounded-t-xl">
+                  {featured.map((p, i) => (
+                    <div key={i} className="flex-shrink-0 w-full px-4 py-6">
+                      <div className="flex flex-col md:flex-row gap-4 items-center">
+                        <div className="w-full md:w-1/2 flex justify-center items-center">
                           <img
-                            src={Array.isArray(product.images) ? product.images[0] : product.image}
-                            alt={product.name || product.title}
-                            className="w-full h-full object-contain"
+                            src={Array.isArray(p.images) ? p.images[0] : p.image}
+                            alt={p.title || p.name}
+                            className="max-h-[320px] object-contain"
                           />
                         </div>
-
-                        {/* Card body */}
-                        <div className="p-3">
-                          <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-1 text-sm">
-                            {product.name || product.title}
-                          </h3>
-                          <p className="text-pink-600 font-bold text-base">₦{product.price}</p>
+                        <div className="md:w-1/2">
+                          <h4 className="text-lg font-semibold">{p.title || p.name}</h4>
+                          <p className="text-pink-600 font-bold mt-2">₦{p.price}</p>
+                          <p className="text-sm text-gray-600 mt-2 line-clamp-3">{p.description}</p>
                         </div>
                       </div>
                     </div>
@@ -276,194 +272,149 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Dots */}
-              <div className="flex justify-center mt-4 space-x-2">
+              {/* dots */}
+              <div className="flex justify-center gap-2 mt-3">
                 {Array.from({ length: slides }).map((_, i) => (
                   <button
                     key={i}
                     onClick={() => setCurrentSlide(i)}
-                    className={`w-3 h-3 rounded-full ${
-                      currentSlide === i ? "bg-pink-600" : "bg-gray-300 dark:bg-gray-600"
-                    }`}
+                    className={`w-3 h-3 rounded-full ${currentSlide === i ? "bg-pink-600" : "bg-gray-300 dark:bg-gray-600"}`}
                   />
                 ))}
               </div>
             </div>
           )}
 
-          {/* All Products */}
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold mb-6 text-gray-800 dark:text-white">
-              {showFavorites
-                ? "❤️ Your Favorites"
-                : query
-                ? "🔍 Search Results"
-                : selectedCategory === "All"
-                ? "🛒 All Products"
-                : `${selectedCategory} Products`}
-            </h2>
+          {/* Products header */}
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-bold text-gray-800 dark:text-white">
+              {showFavorites ? "❤️ Favorites" : query ? `🔍 Results for "${query}"` : selectedCategory === "All" ? "🛒 All Products" : `${selectedCategory} Products`}
+            </h3>
+            <div className="text-sm text-gray-500">{filteredProducts.length} results</div>
+          </div>
 
-            {/* Loading skeleton */}
-            {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded-lg h-48"
+          {/* Product grid */}
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded-lg h-52" />
+              ))}
+            </div>
+          ) : filteredProducts.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {filteredProducts.slice(0, visibleCount).map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    isFavorite={favorites.includes(product.id)}
+                    toggleFavorite={toggleFavorite}
                   />
                 ))}
               </div>
-            ) : filteredProducts.length > 0 ? (
-              <>
-                {/* ✅ Fixed Product Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                  {filteredProducts.slice(0, visibleCount).map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      isFavorite={favorites.includes(product.id)}
-                      toggleFavorite={toggleFavorite}
-                    />
-                  ))}
-                </div>
 
-                <div ref={loaderRef} className="h-12 flex justify-center items-center">
-                  {visibleCount < filteredProducts.length && (
-                    <p className="text-gray-500 dark:text-gray-300 text-sm">Loading more...</p>
-                  )}
-                </div>
-              </>
-            ) : (
-              <p className="col-span-full text-gray-500 dark:text-gray-300">
-                {error || "No products found."}
-              </p>
-            )}
-          </div>
+              <div ref={loaderRef} className="mt-6 flex justify-center items-center">
+                {visibleCount < filteredProducts.length ? (
+                  <p className="text-gray-600 dark:text-gray-300">Loading more...</p>
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400">End of results</p>
+                )}
+              </div>
+            </>
+          ) : (
+            <p className="text-gray-500 dark:text-gray-400">No products found.</p>
+          )}
         </main>
       </div>
 
       {/* Services */}
-      <section className="max-w-7xl mx-auto px-4 py-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        <ServiceCard
-          icon={<Truck className="text-pink-600 w-8 h-8" />}
-          title="Fast Delivery"
-          description="Get your items delivered quickly and safely within campus."
-        />
-        <ServiceCard
-          icon={<Shield className="text-pink-600 w-8 h-8" />}
-          title="Secure Payment"
-          description="Your transactions are safe with our trusted payment system."
-        />
-        <ServiceCard
-          icon={<Package className="text-pink-600 w-8 h-8" />}
-          title="Quality Products"
-          description="Buy and sell only the best items verified by students."
-        />
+      <section className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <ServiceCard icon={<Truck className="text-pink-600 w-8 h-8" />} title="Fast Delivery" description="Get your items delivered quickly and safely within campus." />
+        <ServiceCard icon={<Shield className="text-pink-600 w-8 h-8" />} title="Secure Payment" description="Your transactions are safe with our trusted payment system." />
+        <ServiceCard icon={<Package className="text-pink-600 w-8 h-8" />} title="Quality Products" description="Buy and sell only the best items verified by students." />
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-800 text-white py-10 mt-12">
-        <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+      <footer className="bg-gray-800 text-white py-8">
+        <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <div>
-            <h3 className="text-lg font-bold mb-4">CampusMart</h3>
-            <p className="text-gray-400 text-sm">
-              A marketplace built for students, by students. Buy and sell with ease within your
-              campus.
-            </p>
+            <h4 className="font-bold mb-2">CampusMart</h4>
+            <p className="text-gray-400 text-sm">A marketplace built for students, by students.</p>
           </div>
           <div>
-            <h3 className="text-lg font-bold mb-4">Quick Links</h3>
-            <ul className="space-y-2 text-gray-400 text-sm">
-              <li>
-                <Link href="/">Home</Link>
-              </li>
-              <li>
-                <Link href="/add-product">Sell Product</Link>
-              </li>
-              <li>
-                <Link href="/favorites">Favorites</Link>
-              </li>
+            <h4 className="font-bold mb-2">Quick Links</h4>
+            <ul className="text-gray-400 text-sm space-y-1">
+              <li><Link href="/">Home</Link></li>
+              <li><Link href="/add-product">Sell Product</Link></li>
+              <li><Link href="/favorites">Favorites</Link></li>
             </ul>
           </div>
           <div>
-            <h3 className="text-lg font-bold mb-4">Support</h3>
-            <ul className="space-y-2 text-gray-400 text-sm">
-              <li>
-                <Link href="#">Help Center</Link>
-              </li>
-              <li>
-                <Link href="#">Contact Us</Link>
-              </li>
-              <li>
-                <Link href="#">Report Issue</Link>
-              </li>
+            <h4 className="font-bold mb-2">Support</h4>
+            <ul className="text-gray-400 text-sm space-y-1">
+              <li><Link href="#">Help Center</Link></li>
+              <li><Link href="#">Contact</Link></li>
             </ul>
           </div>
           <div>
-            <h3 className="text-lg font-bold mb-4">Follow Us</h3>
-            <div className="flex space-x-4">
-              <Facebook className="w-6 h-6 text-gray-400 hover:text-white cursor-pointer" />
-              <Twitter className="w-6 h-6 text-gray-400 hover:text-white cursor-pointer" />
-              <Instagram className="w-6 h-6 text-gray-400 hover:text-white cursor-pointer" />
+            <h4 className="font-bold mb-2">Follow</h4>
+            <div className="flex gap-3">
+              <Facebook className="w-6 h-6 text-gray-400" />
+              <Twitter className="w-6 h-6 text-gray-400" />
+              <Instagram className="w-6 h-6 text-gray-400" />
             </div>
           </div>
         </div>
-        <div className="text-center text-gray-500 text-xs mt-8">
-          © {new Date().getFullYear()} CampusMart. All rights reserved. Rayechos
-        </div>
+        <div className="text-center text-gray-500 mt-6 text-xs">© {new Date().getFullYear()} CampusMart</div>
       </footer>
     </section>
   );
 }
 
-function ProductCard({ product, isFavorite, toggleFavorite, badge }) {
+/* ProductCard component */
+function ProductCard({ product, isFavorite, toggleFavorite }) {
   return (
-    <Link href={`/product/${product.id}`}>
-      <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transform hover:-translate-y-1 hover:scale-105 transition cursor-pointer">
+    <Link href={`/product/${product.id}`} className="block">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transform hover:-translate-y-1 transition overflow-hidden h-full flex flex-col">
         <div className="relative">
-          <div className="aspect-square overflow-hidden">
+          <div className="aspect-w-1 aspect-h-1">
             <img
               src={Array.isArray(product.images) ? product.images[0] : product.image}
-              alt={product.name}
-              loading="lazy"
-              className="w-full h-full object-cover"
+              alt={product.title || product.name}
+              className="w-full h-48 object-contain bg-gray-50 dark:bg-gray-700 p-3"
             />
           </div>
-          {badge && (
-            <span className="absolute top-2 left-2 bg-pink-600 text-white text-xs px-2 py-1 rounded-full">
-              {badge}
-            </span>
-          )}
+
           <button
-            onClick={(e) => {
-              e.preventDefault();
-              toggleFavorite(product.id);
-            }}
-            className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full hover:bg-white transition"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(product.id); }}
+            className="absolute top-2 right-2 p-2 bg-white/90 dark:bg-gray-700 rounded-full shadow"
+            aria-label="favorite"
           >
-            <Heart
-              className={`w-4 h-4 ${isFavorite ? "text-red-500" : "text-gray-600"}`}
-            />
+            <Heart className={`w-4 h-4 ${isFavorite ? "text-red-500" : "text-gray-600"}`} />
           </button>
         </div>
-        <div className="p-3">
-          <h3 className="font-semibold text-gray-800 line-clamp-1 text-sm sm:text-base">
-            {product.title}
-          </h3>
-          <p className="text-lg sm:text-xl font-bold text-pink-600 mt-1">₦{product.price}</p>
-          <p className="text-xs text-gray-500 mt-1">{product.category}</p>
+
+        <div className="p-3 flex-1 flex flex-col">
+          <h4 className="font-semibold text-gray-800 dark:text-gray-100 text-sm line-clamp-2">{product.title || product.name}</h4>
+          <div className="mt-2 flex items-center justify-between">
+            <div>
+              <p className="text-pink-600 font-bold">₦{product.price}</p>
+              <p className="text-xs text-gray-500 mt-1">{product.category}</p>
+            </div>
+          </div>
         </div>
       </div>
     </Link>
   );
 }
 
+/* Service card */
 function ServiceCard({ icon, title, description }) {
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow hover:shadow-lg transition flex flex-col items-center text-center">
-      {icon}
-      <h3 className="font-semibold text-lg mt-3 text-gray-800 dark:text-white">{title}</h3>
-      <p className="text-gray-500 dark:text-gray-300 text-sm mt-2">{description}</p>
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 text-center">
+      <div className="flex justify-center mb-3">{icon}</div>
+      <h5 className="font-semibold mb-2">{title}</h5>
+      <p className="text-sm text-gray-500">{description}</p>
     </div>
   );
 }
