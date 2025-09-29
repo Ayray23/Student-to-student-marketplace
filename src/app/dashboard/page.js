@@ -264,7 +264,7 @@ export default function Dashboard() {
                         <div className="md:w-1/2">
                           <h4 className="text-lg font-semibold">{p.title || p.name}</h4>
                           <p className="text-pink-600 font-bold mt-2">₦{p.price}</p>
-                          <p className="text-sm text-gray-600 mt-2 line-clamp-3">{p.description}</p>
+                          {/* <p className="text-sm text-gray-600 mt-2 line-clamp-3">{p.description}</p> */}
                         </div>
                       </div>
                     </div>
