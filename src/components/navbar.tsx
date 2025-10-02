@@ -2,7 +2,8 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu, X, Sun, Moon, User } from "lucide-react";
-import { createClient } from "/src/utils/supabase/client.ts";
+import { createClient } from "@/utils/supabase/client";
+
 
 
 
@@ -36,6 +37,7 @@ export default function Navbar() {
 
   // 🔑 Handle Supabase User
   useEffect(() => {
+    
     const getUser = async () => {
       const { data } = await supabase.auth.getUser();
       setUser(data?.user ?? null);

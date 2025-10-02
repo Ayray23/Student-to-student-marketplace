@@ -16,7 +16,8 @@ import {
   Instagram,
 } from "lucide-react";
 import Link from "next/link";
-import { createClient } from "/src/utils/supabase/client.ts";
+import { createClient } from "@/utils/supabase/client";
+
 import Navbar from "/src/components/navbar.tsx";
 
 const categories = ["All", "Books", "Fashion", "Electronics", "Furniture", "Others"];

@@ -14,7 +14,8 @@ import { RadioGroup, RadioGroupItem } from "../../components/ui/radio-group";
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { createClient } from "/src/utils/supabase/client.ts";
+import { createClient } from "@/utils/supabase/client";
+
 
 export default function AddProduct() {
   const supabase = createClient();

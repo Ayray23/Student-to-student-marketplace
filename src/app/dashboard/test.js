@@ -21,7 +21,8 @@
 // // //   Instagram,
 // // // } from "lucide-react";
 // // // import Link from "next/link";
-// // // import { createClient } from "/src/utils/supabase/client.ts";
+// // // import { createClient } from "@/utils/supabase/client";
+
 // // // import Navbar from "/src/components/navbar.tsx";
 // // // import Navbar from "/src/components/navbar.tsx";
 
@@ -302,7 +303,8 @@
 // // //   Instagram,
 // // // } from "lucide-react";
 // // // import Link from "next/link";
-// // // import { createClient } from "/src/utils/supabase/client.ts";
+// // // import { createClient } from "@/utils/supabase/client";
+
 // // // import Navbar from "/src/components/navbar.tsx";
 
 // // // const categories = ["All", "Books", "Fashion", "Gadgets", "Furniture", "Others"];
@@ -687,7 +689,8 @@
 // // //   Instagram,
 // // // } from "lucide-react";
 // // // import Link from "next/link";
-// // // import { createClient } from "/src/utils/supabase/client.ts";
+// // // import { createClient } from "@/utils/supabase/client";
+
 // // // import Navbar from "/src/components/navbar.tsx";
 // // import { Button } from "@/components/ui/button";
 // // import { Input } from "@/components/ui/input";
@@ -1060,7 +1063,8 @@
 
 // import { toast, ToastContainer } from "react-toastify";
 // import "react-toastify/dist/ReactToastify.css";
-// import { createClient } from "/src/utils/supabase/client.ts";
+// import { createClient } from "@/utils/supabase/client";
+
 
 // const AddProduct = () => {
 //   const supabase = createClient();

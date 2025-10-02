@@ -11,7 +11,8 @@ import {
   Calendar,
 } from "lucide-react";
 import Link from "next/link";
-import { createClient } from "/src/utils/supabase/client.ts";
+import { createClient } from "@/utils/supabase/client";
+
 
 export default function ProductDetails() {
   const router = useRouter();

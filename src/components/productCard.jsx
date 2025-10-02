@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { Dialog } from "@headlessui/react";
 import { Trash2, Edit3 } from "lucide-react";
-import { createClient } from "/src/utils/supabase/client.ts";
+import { createClient } from "@/utils/supabase/client";
+
 
 const supabase = createClient();
 
