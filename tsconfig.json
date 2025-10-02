@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
+    "types": ["node"],                       // 👈 ADD THIS
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -13,8 +14,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
-    "baseUrl": ".",                   // 👈 Add this
-    "paths": {                        // 👈 Add this
+    "baseUrl": ".",
+    "paths": {
       "@/*": ["./src/*"]
     },
     "plugins": [
