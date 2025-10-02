@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, Fragment, useCallback } from "react";
-import { createClient } from "/src/utils/supabase/client";
+import { createClient } from "@/utils/supabase/client";
 import { Dialog, Transition } from "@headlessui/react";
 import {
   X,
