@@ -14,22 +14,24 @@ export const AuthProvider = ({ children }) => {
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) throw error;
 
+    // 👇 IMPORTANT: only insert profile if session exists
     if (data.user) {
-      const { error: profileError } = await supabase.from("profiles").insert([
-        {
-          user_id: data.user.id,
-          username,
-          phone,
-          email: data.user.email,
-          full_name: "",
-          bio: "",
-          location: "",
-          university: "",
-          graduation_year: null,
-        },
-      ]);
+      const { error: profileError } = await supabase.from("profiles").upsert({
+        user_id: data.user.id,
+        username,
+        phone,
+        email: data.user.email,
+        full_name: "",
+        bio: "",
+        location: "",
+        university: "",
+        graduation_year: null,
+      });
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("❌ Profile creation failed:", profileError.message);
+        // Don’t throw → let signup succeed anyway
+      }
     }
     return data;
   };
@@ -62,14 +64,14 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  // ✅ Track session + create Google profiles automatically
+  // ✅ Track session + auto-sync profile
   useEffect(() => {
     const getSession = async () => {
       const { data } = await supabase.auth.getUser();
       setUser(data.user ?? null);
 
-      // If Google user logs in and profile missing, create it
       if (data.user) {
+        // Ensure profile always exists (Google or Email login)
         const { error: profileError } = await supabase.from("profiles").upsert({
           user_id: data.user.id,
           email: data.user.email,
@@ -79,7 +81,10 @@ export const AuthProvider = ({ children }) => {
           full_name: data.user.user_metadata?.full_name || "",
           avatar_url: data.user.user_metadata?.avatar_url || null,
         });
-        if (profileError) console.error("❌ Profile sync failed:", profileError);
+
+        if (profileError) {
+          console.error("❌ Profile sync failed:", profileError.message);
+        }
       }
     };
     getSession();
@@ -90,9 +95,7 @@ export const AuthProvider = ({ children }) => {
       }
     );
 
-    return () => {
-      subscription?.subscription.unsubscribe();
-    };
+    return () => subscription?.subscription.unsubscribe();
   }, [supabase]);
 
   return (
