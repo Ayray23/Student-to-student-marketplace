@@ -1,13 +1,22 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "/src/lib/mongodb";
-import Product from "/src/models/product";
+import { createClient } from "@/utils/supabase/server";
 
 export async function GET() {
+  const supabase = createClient();
+
   try {
-    await connectDB();
-    const products = await Product.find({ featured: true }).limit(10);
-    return NextResponse.json(products);
-  } catch (error) {
+    // Fetch featured products from Supabase
+    const { data: products, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("is_featured", true) // 👈 Make sure your DB has a `is_featured` column
+      .limit(10);
+
+    if (error) throw error;
+
+    return NextResponse.json(products, { status: 200 });
+  } catch (err) {
+    console.error("Error fetching featured products:", err);
     return NextResponse.json(
       { error: "Failed to fetch products" },
       { status: 500 }
