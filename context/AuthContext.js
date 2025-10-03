@@ -3,32 +3,25 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 
-
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const supabase = createClient();
   const [user, setUser] = useState(null);
 
-  // ✅ Register user + create profile
+  // ✅ Register user + profile
   const register = async (email, password, { username, phone }) => {
-    // Step 1: Sign up with Supabase Auth
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-
+    const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) throw error;
 
-    // Step 2: Insert profile row if user is created
     if (data.user) {
       const { error: profileError } = await supabase.from("profiles").insert([
         {
           user_id: data.user.id,
           username,
           phone,
-          email: data.user.email, // optional
-          full_name: "", // placeholder
+          email: data.user.email,
+          full_name: "",
           bio: "",
           location: "",
           university: "",
@@ -36,16 +29,12 @@ export const AuthProvider = ({ children }) => {
         },
       ]);
 
-      if (profileError) {
-        console.error("❌ Profile creation failed:", profileError.message);
-        throw profileError;
-      }
+      if (profileError) throw profileError;
     }
-
     return data;
   };
 
-  // ✅ Login user
+  // ✅ Email login
   const login = async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -55,9 +44,9 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
-  // ✅ Google login
+  // ✅ Google login (redirect flow)
   const googleLogin = async () => {
-    const { data, error } = await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/dashboard`,
@@ -65,31 +54,6 @@ export const AuthProvider = ({ children }) => {
       },
     });
     if (error) throw error;
-
-    // (Optional) create profile for Google users
-    if (data?.user) {
-      const { error: profileError } = await supabase.from("profiles").insert([
-        {
-          user_id: data.user.id,
-          username: data.user.user_metadata?.full_name || `user_${Date.now()}`,
-          phone: null,
-          email: data.user.email,
-          full_name: data.user.user_metadata?.full_name || "",
-          avatar_url: data.user.user_metadata?.avatar_url || null,
-          bio: "",
-          location: "",
-          university: "",
-          graduation_year: null,
-        },
-      ]).single();
-
-      if (profileError && profileError.code !== "23505") {
-        // ignore duplicate key error if profile already exists
-        console.error("❌ Google profile creation failed:", profileError.message);
-      }
-    }
-
-    return data;
   };
 
   // ✅ Logout
@@ -98,11 +62,25 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  // ✅ Track user session
+  // ✅ Track session + create Google profiles automatically
   useEffect(() => {
     const getSession = async () => {
       const { data } = await supabase.auth.getUser();
       setUser(data.user ?? null);
+
+      // If Google user logs in and profile missing, create it
+      if (data.user) {
+        const { error: profileError } = await supabase.from("profiles").upsert({
+          user_id: data.user.id,
+          email: data.user.email,
+          username:
+            data.user.user_metadata?.full_name ||
+            `user_${data.user.id.substring(0, 6)}`,
+          full_name: data.user.user_metadata?.full_name || "",
+          avatar_url: data.user.user_metadata?.avatar_url || null,
+        });
+        if (profileError) console.error("❌ Profile sync failed:", profileError);
+      }
     };
     getSession();
 
@@ -113,7 +91,7 @@ export const AuthProvider = ({ children }) => {
     );
 
     return () => {
-      subscription.subscription.unsubscribe();
+      subscription?.subscription.unsubscribe();
     };
   }, [supabase]);
 
