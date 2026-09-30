@@ -1,56 +1,92 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
-
-const supabase = createClient();
-
-
-import React from "react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleLogin = async () => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) alert("Login failed: " + error.message);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) alert("Login failed: " + error.message);
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Supabase is not configured."
+      );
+    }
   };
 
   const handleGoogleLogin = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: "http://localhost:3000/auth/callback" },
-    });
+    try {
+      const supabase = createClient();
+      const redirectTo = `${window.location.origin}/auth/callback`;
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo },
+      });
+
+      if (error) alert("Google login failed: " + error.message);
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Supabase is not configured."
+      );
+    }
   };
 
   return (
-    <div className="flex flex-col gap-4 max-w-sm mx-auto mt-10">
-      <h1 className="text-2xl font-bold">Login</h1>
-      <input
-        type="email"
-        placeholder="Email"
-        className="border px-3 py-2 rounded"
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        className="border px-3 py-2 rounded"
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <button
-        onClick={handleLogin}
-        className="bg-green-600 text-white px-4 py-2 rounded"
-      >
-        Login
-      </button>
-      <button
-        onClick={handleGoogleLogin}
-        className="bg-red-500 text-white px-4 py-2 rounded"
-      >
-        Login with Google
-      </button>
-    </div>
+    <main className="flex min-h-screen items-center justify-center px-6 py-12">
+      <div className="flex w-full max-w-sm flex-col gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Sign in to continue to Campus Marketplace.
+          </p>
+        </div>
+
+        <input
+          type="email"
+          value={email}
+          placeholder="Email"
+          autoComplete="email"
+          className="rounded-xl border px-4 py-3 outline-none transition focus:ring-2 focus:ring-emerald-500"
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        <input
+          type="password"
+          value={password}
+          placeholder="Password"
+          autoComplete="current-password"
+          className="rounded-xl border px-4 py-3 outline-none transition focus:ring-2 focus:ring-emerald-500"
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        <button
+          onClick={handleLogin}
+          className="rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white transition hover:bg-emerald-700 active:scale-[0.99]"
+        >
+          Sign in
+        </button>
+
+        <button
+          onClick={handleGoogleLogin}
+          className="rounded-xl border px-4 py-3 font-semibold transition hover:bg-muted active:scale-[0.99]"
+        >
+          Continue with Google
+        </button>
+      </div>
+    </main>
   );
 }
