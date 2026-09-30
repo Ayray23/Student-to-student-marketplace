@@ -6,6 +6,10 @@ on:
     branches: [master, main]
   workflow_dispatch:
 
+env:
+  NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-placeholder-key
+
 jobs:
   build:
     runs-on: ubuntu-latest
